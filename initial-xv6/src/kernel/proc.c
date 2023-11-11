@@ -152,6 +152,15 @@ found:
   p->rtime = 0;
   p->etime = 0;
   p->ctime = ticks;
+
+  #ifdef SCHED_PBS
+    p->RTime = 0;
+    p->STime = 0;
+    p->WTime = 0;
+    p->SP = 50;
+
+  #endif
+
   return p;
 }
 
@@ -450,6 +459,42 @@ int wait(uint64 addr)
     sleep(p, &wait_lock); // DOC: wait-sleep
   }
 }
+#define SCHED_PBS
+// #define SCHED_RR
+#ifdef SCHED_PBS
+  // Calculate the RBI from the process times
+  int GetRBI(uint RTime, uint STime, uint WTime){
+    int a = 3*RTime - STime - WTime;
+    a *= 50;
+    a /= RTime + STime + WTime + 1;
+    if (a<0) return 0;
+    return a;
+  }
+
+  // Update the times for all the processes
+  void UpdateTimes(int sel_p_idx){
+    for (int p_idx = 0; p_idx < NPROC; p_idx++)
+    {
+      acquire (&proc[p_idx].lock);
+
+      if (p_idx == sel_p_idx){
+        proc[p_idx].RTime ++;
+        proc[p_idx].STime = 0;
+      }
+      else{
+        proc[p_idx].RTime = 0;
+        if (proc[p_idx].state == SLEEPING)
+          proc[p_idx].STime ++;
+        if (proc[p_idx].state == RUNNABLE)
+          proc[p_idx].WTime ++;
+
+      }
+      release (&proc[p_idx].lock);
+    }
+    
+  }
+
+#endif
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -460,7 +505,6 @@ int wait(uint64 addr)
 //    via swtch back to the scheduler.
 void scheduler(void)
 {
-  struct proc *p;
   struct cpu *c = mycpu();
 
   c->proc = 0;
@@ -469,24 +513,70 @@ void scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for (p = proc; p < &proc[NPROC]; p++)
-    {
-      acquire(&p->lock);
-      if (p->state == RUNNABLE)
-      {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
+    #ifdef SCHED_RR
+      struct proc *p;
 
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
+      for (p = proc; p < &proc[NPROC]; p++)
+      {
+        acquire(&p->lock);
+        if (p->state == RUNNABLE)
+        {
+          // Switch to chosen process.  It is the process's job
+          // to release its lock and then reacquire it
+          // before jumping back to us.
+          p->state = RUNNING;
+          c->proc = p;
+          swtch(&c->context, &p->context);
+
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
+        }
+        release(&p->lock);
       }
+    #endif
+    #ifdef SCHED_PBS
+      // printf("hello\n");
+      struct proc *p;
+      int max_p_idx = -1;
+      int min_dp = 100001;
+
+      for (int p_idx = 0; p_idx < NPROC; p_idx++)
+      {
+        p = &proc[p_idx];
+        acquire(&proc[p_idx].lock);
+        if (proc[p_idx].state == RUNNABLE)
+        { 
+          int rbi  = GetRBI(p->RTime, p->STime, p->WTime);
+          int dp = p->SP+ rbi;
+          if (dp > 100) dp = 100;
+          if (dp < 0) dp = 0;
+
+          // printf("> %d %d \n", p->pid, dp);
+          if (dp < min_dp || (dp == min_dp && proc[p_idx].ctime <  proc[max_p_idx].ctime) ){
+            max_p_idx = p_idx;
+            min_dp = dp;
+          }
+        }
+        release(&proc[p_idx].lock);
+      }
+      if (max_p_idx == -1){
+        // printf("Couldnt Find Process to run\n");
+        continue;
+      }
+      UpdateTimes(max_p_idx);
+      p = &proc[max_p_idx];
+      acquire(&p->lock);
+      p->state = RUNNING;
+      c->proc = p;
+      swtch(&c->context, &p->context);
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
       release(&p->lock);
-    }
+
+    #endif
   }
 }
 

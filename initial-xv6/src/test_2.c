@@ -4,24 +4,14 @@
 
 int
 main(int argc, char *argv[]) {
-    int x1 = getreadcount();
-
-    int rc = fork();
-
-    int total = 0;
-    int i;
-    for (i = 0; i < 100000; i++) {
-        char buf[100];
-        (void) read(4, buf, 1);
+    int x1= 1;
+    if (fork()>0){
+        x1 = 2;
     }
-    // https://wiki.osdev.org/Shutdown
-    // (void) shutdown();
-
-    if (rc > 0) {
-        (void) wait(&rc);
-        int x2 = getreadcount();
-        total += (x2 - x1);
-        printf("XV6_TEST_OUTPUT %d\n", total);
+    else{
+        x1 = 3;
+        exit(0);
     }
+    printf(">>>>%d\n", x1);
     exit(0);
 }

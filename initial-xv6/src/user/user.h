@@ -24,6 +24,7 @@ int sleep(int);
 int uptime(void);
 int waitx(int*, int* /*wtime*/, int* /*rtime*/);
 int getreadcount(void);
+int setpriority(int pid, int priority);
 
 // ulib.c
 int stat(const char*, struct stat*);

@@ -108,3 +108,30 @@ sys_waitx(void)
     return -1;
   return ret;
 }
+
+uint64
+sys_setpriority(void)
+{
+  #ifdef SCHED_PBS
+    int pid, priority;
+    int old_priority = 0 ;
+    argint(0, &pid);
+    argint(1, &priority);
+    if (priority < 0) priority = 0;
+    if (priority > 100) priority = 100;
+    for (int p_idx = 0; p_idx < NPROC; p_idx++){
+
+      if (proc[p_idx].pid == pid){
+        acquire(&proc[p_idx].lock);
+        old_priority = proc[p_idx].SP;
+        proc[p_idx].SP = priority;
+        release(&proc[p_idx].lock);
+        break;
+      }
+    }
+    return old_priority;
+  #else
+    return 0;
+  #endif
+}
+

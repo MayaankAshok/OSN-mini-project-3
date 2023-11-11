@@ -70,9 +70,28 @@ void usertrap(void)
   }
   else
   {
-    printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
-    printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
-    setkilled(p);
+    if (r_scause() == 0xf){ // Page write fault
+      // create new page 
+      // copy to new page
+      // map page with write enabled
+      printf("Page fault %d %d \n", p->pid,  r_stval());
+      uint64 va = r_stval();
+      pte_t * pte =walk(p->pagetable, va, 0);
+      uint64 pa = PTE2PA(*pte);
+      char* mem = kalloc();
+      memmove(mem, (char*)PGROUNDDOWN(pa), PGSIZE);
+      uint flags = PTE_FLAGS(*pte);
+      flags |= PTE_W;
+      mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags );
+
+
+    } 
+    else{
+
+      printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
+      printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+      setkilled(p);
+    }
   }
 
   if (killed(p))

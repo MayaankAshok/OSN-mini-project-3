@@ -91,6 +91,7 @@ enum procstate
   RUNNING,
   ZOMBIE
 };
+#define SCHED_PBS
 
 // Per-process state
 struct proc
@@ -119,6 +120,12 @@ struct proc
   uint rtime;                  // How long the process ran for
   uint ctime;                  // When was the process created
   uint etime;                  // When did the process exited
+
+  #ifdef SCHED_PBS
+    uint RTime, STime, WTime;
+    uint SP;
+  #endif
+
 };
 
 extern struct proc proc[NPROC];
