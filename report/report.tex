@@ -1,0 +1,28 @@
+\documentclass{article}
+
+\usepackage{lipsum}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{pythonhighlight}
+\usepackage{hyperref}
+
+\title{Mini Project 3}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Implementation Details of PBS}
+We define 3 variables \verb|RTime|, \verb|WTime|, and \verb|STime| that denote the running, waiting, and sleeping time of each process. Each tick we update these values for each process. These values are used to calculate the \verb|RBI| and \verb|DP| for each process. Each tick, we iterate over each process and choose the process with the minimum \verb|DP|
+
+\section{Implementation Details of Cafe Simulator}
+The simulator has 1 thread for each barista and one thread for each consumer. Further there is one thread that syncs all the other threads. At the start of each tick, each producer tick waits for \verb|prod_start| and at the end of each tick each producer posts to \verb|prod_comp|. Meanwhile at the start of each tick the synchronizing thread posts to each \verb|prod_start| then waits for all \verb|prod_comp|. This ensures that all producers start together and that the tick doesnt increment till all producers are completed. Similar synchronizing occurs for customer threads.
+
+A variable is maintained to keep track of the coffees wasted and the total ticks spent waiting by each customer. The latter is used to calculate the average waiting time. The minimum possible  waiting time is the average of the time to prepare each customer's coffee.
+\end{document}
+
+

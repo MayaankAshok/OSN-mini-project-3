@@ -5,6 +5,7 @@
 int
 main(int argc, char *argv[]) {
     int x1= 1;
+    printf("Hello\n");
     if (fork()>0){
         x1 = 2;
     }

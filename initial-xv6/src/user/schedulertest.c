@@ -3,8 +3,8 @@
 #include "user/user.h"
 #include "kernel/fcntl.h"
 
-#define NFORK 10
-#define IO 5
+#define NFORK 6
+#define IO 0
 
 int main()
 {
@@ -40,6 +40,6 @@ int main()
       twtime += wtime;
     }
   }
-  printf("Average rtime %d,  wtime %d\n", trtime / NFORK, twtime / NFORK);
+  // printf("Average rtime %d,  wtime %d\n", trtime / NFORK, twtime / NFORK);
   exit(0);
 }

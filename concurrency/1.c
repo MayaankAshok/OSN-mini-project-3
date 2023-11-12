@@ -1,3 +1,4 @@
+// gcc -pthread 1.c -o 1.out -fsanitize=address -ggdb  && ./1.out 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -390,8 +391,23 @@ int main(void){
 	}
 	pthread_join(sync_thr, NULL);
 
+	int sum_times = 0;
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < K; j++)
+		{
+			if (strcmp(cust_coffee[i], coffee_name[j]) == 0){
+				sum_times += coffee_time[j];
+				break;
+			}
+		}
+		
+	}
+	
+
 	printf("Coffees Wasted: %d \n", coffees_wasted);
 	printf("Average Wait time %.2f\n", ((float) tot_wait_time)/N);
+	printf("Minimum Wait time %.2f\n", ((float) sum_times)/N);
 
 	return 0;
 }

@@ -91,7 +91,7 @@ enum procstate
   RUNNING,
   ZOMBIE
 };
-#define SCHED_PBS
+// #define SCHED_PBS
 
 // Per-process state
 struct proc

@@ -459,7 +459,7 @@ int wait(uint64 addr)
     sleep(p, &wait_lock); // DOC: wait-sleep
   }
 }
-#define SCHED_PBS
+// #define SCHED_PBS
 // #define SCHED_RR
 #ifdef SCHED_PBS
   // Calculate the RBI from the process times
@@ -508,6 +508,13 @@ void scheduler(void)
   struct cpu *c = mycpu();
 
   c->proc = 0;
+  #ifdef SCHED_RR
+    printf("Using Scheduler RR\n");
+
+  #endif
+  #ifdef SCHED_PBS
+    printf("Using Scheduler PBS\n");
+  #endif  
   for (;;)
   {
     // Avoid deadlock by ensuring that devices can interrupt.
@@ -515,7 +522,6 @@ void scheduler(void)
 
     #ifdef SCHED_RR
       struct proc *p;
-
       for (p = proc; p < &proc[NPROC]; p++)
       {
         acquire(&p->lock);

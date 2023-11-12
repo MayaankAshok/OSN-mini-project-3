@@ -324,7 +324,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 
     //Disable write on pte
     *pte = *pte & (~PTE_W); 
-    
+    add_reference(pa);
     flags = PTE_FLAGS(*pte);
     if(mappages(new, i, PGSIZE, (uint64)pa, flags) != 0){
       // kfree(mem);
@@ -358,26 +358,15 @@ int
 copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 {
   uint64 n, va0, pa0;
+
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
     pa0 = walkaddr(pagetable, va0);
-
     if(pa0 == 0)
       return -1;
-
     n = PGSIZE - (dstva - va0);
     if(n > len)
       n = len;
-
-    pte_t* pte = walk(pagetable, va0, 0);
-    if (!(*pte & PTE_W)){
-      printf("Hello?\n");
-      uint flags= PTE_FLAGS(*pte);
-      flags |= PTE_W;  
-      char * mem = kalloc();
-      memmove(mem, (char*) pa0, PGSIZE);
-      mappages(pagetable, va0, PGSIZE, (uint64)mem, flags);
-    }
     memmove((void *)(pa0 + (dstva - va0)), src, n);
 
     len -= n;
